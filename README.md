@@ -1,3 +1,18 @@
+# Notas previas
+
+#Ver el estado de tu working tree
+git status
+
+#Agregar los archivos modificados (puedes especificar ficheros individuales o usar . para todos)
+git add .
+
+#Crear el commit con un mensaje descriptivo
+git commit -m "Describe brevemente los cambios realizados"
+
+#Enviar tus commits a tu repositorio en GitHub
+git push origin <nombre-de-la-rama>
+
+
 # ERP Backend
 
 This is a ERP backend repository using NestJS, PostgreSQL, Prisma and Docker.
