@@ -1,4 +1,5 @@
 version: '3.8'
+
 services:
   db:
     image: postgres:13
@@ -11,5 +12,21 @@ services:
     ports:
       - '5432:5432'
 
+  app:
+    build:
+      context: .
+    command: npm run dev
+    environment:
+      DATABASE_URL: postgresql://db_user:db_password@db:5432/main_database?schema=public
+      JWT_SECRET: tu_jwt_secret
+      APP_PORT: "8000"
+    volumes:
+      - .:/workspace:cached
+    ports:
+      - '8000:8000'
+    depends_on:
+      - db
+
 volumes:
   db_data:
+    driver: local
