@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint_and_test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: db_user
+          POSTGRES_PASSWORD: db_password
+          POSTGRES_DB: main_database
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U db_user"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://db_user:db_password@localhost:5432/main_database?schema=public
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Use Node.js 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint      # o el comando que tengas para ESLint/Prettier
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run Prisma migrate (dev)
+        run: npx prisma migrate deploy
+
+      - name: Run tests
+        run: npm test           # ajusta según tu script de tests
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=moderate
