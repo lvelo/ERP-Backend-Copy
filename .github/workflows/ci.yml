@@ -1,6 +1,6 @@
 # Nombre de la tarea de automatización
 name: CI (Integración Continua)
-
+ 
 # Eventos que disparan la tarea
 on:
   # Cuando se actualiza el código en el branch principal
