@@ -1,57 +1,71 @@
-name: CI
+# Nombre de la tarea de automatización
+name: CI (Integración Continua)
 
+# Eventos que disparan la tarea
 on:
+  # Cuando se actualiza el código en el branch principal
   push:
     branches: [ main ]
+  # Cuando se crea una solicitud de cambios al branch principal
   pull_request:
     branches: [ main ]
 
+# Tareas que se ejecutan en la automatización
 jobs:
   build_lint_test:
+    # Entorno en el que se ejecuta la tarea
     runs-on: ubuntu-latest
 
+    # Servicios que se necesitan para la tarea
     services:
+      # Base de datos que se utiliza
       postgres:
-        image: postgres:13
+        # Configuración de la base de datos
         env:
+          # Usuario de la base de datos
           POSTGRES_USER: db_user
+          # Contraseña de la base de datos (no es recomendable dejarla así, debería ser una variable segura)
           POSTGRES_PASSWORD: db_password
+          # Nombre de la base de datos
           POSTGRES_DB: main_database
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U db_user"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
+    # Variables de entorno para la tarea
     env:
+      # Dirección de la base de datos
       DATABASE_URL: postgresql://db_user:db_password@localhost:5432/main_database?schema=public
 
+    # Pasos que se ejecutan en la tarea
     steps:
+      # 1. Descargar el código
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2. Configurar Node.js
       - name: Use Node.js 18
         uses: actions/setup-node@v3
         with:
           node-version: 18.x
 
+      # 3. Instalar dependencias del proyecto
       - name: Install dependencies
         run: npm ci
 
+      # 4. Verificar el código para detectar errores
       - name: Run lint
         run: npm run lint
 
+      # 5. Generar cliente de base de datos
       - name: Generate Prisma client
         run: npx prisma generate
 
+      # 6. Aplicar cambios en la base de datos
       - name: Apply database migrations
         run: npm run migrate:prod
 
+      # 7. Ejecutar pruebas unitarias
       - name: Run unit tests
         run: npm test
 
-      # — Descomenta este bloque si quisieras correr tests e2e también —
+      # 8. Ejecutar pruebas de extremo a extremo (descomentado)
       #- name: Run e2e tests
       #  run: npm run test:e2e
