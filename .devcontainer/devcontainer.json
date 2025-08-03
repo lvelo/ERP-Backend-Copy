@@ -1,16 +1,13 @@
-// .devcontainer/devcontainer.json
 {
   "name": "ERP Backend Dev Container",
   "dockerComposeFile": ["../docker-compose.yml"],
   "service": "app",
-  "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "workspaceFolder": "/workspace",
   "shutdownAction": "stopCompose",
   "runServices": ["db"],
   "postCreateCommand": "sudo apt-get update && sudo apt-get install -y postgresql-client && npm install && npx prisma migrate dev --name init",
-  "forwardPorts": [5432, 8000],
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash"
-  },
+  "forwardPorts": [5432, 8000, 3000],
+  "settings": { "terminal.integrated.shell.linux": "/bin/bash" },
   "overrideCommand": false
 }
