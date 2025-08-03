@@ -60,8 +60,8 @@ jobs:
         run: npx prisma generate
 
       # 6. Aplicar cambios en la base de datos
-      - name: Apply database migrations
-        run: npm run migrate:prod
+      #- name: Apply database migrations
+      #  run: npm run migrate:prod
 
       # 7. Ejecutar pruebas unitarias
       - name: Run unit tests
