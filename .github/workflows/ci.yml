@@ -20,6 +20,7 @@ jobs:
     services:
       # Base de datos que se utiliza
       postgres:
+      image: postgres:13
         # Configuración de la base de datos
         env:
           # Usuario de la base de datos
