@@ -1,13 +1,40 @@
 {
+  // Nombre de este entorno de trabajo
   "name": "ERP Backend Dev Container",
+  
+  // Archivo que define cómo se configura el entorno
   "dockerComposeFile": ["../docker-compose.yml"],
+  
+  // Parte del sistema que se va a ejecutar
   "service": "app",
+  
+  // Configuración para que el entorno tenga acceso a los archivos del proyecto
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  
+  // Ubicación de los archivos del proyecto dentro del entorno
   "workspaceFolder": "/workspace",
+  
+  // Qué hacer cuando se cierra el entorno
   "shutdownAction": "stopCompose",
+  
+  // Servicios que se necesitan para que el entorno funcione
   "runServices": ["db"],
+  // En este caso, se necesita una base de datos
+  
+  // Instrucciones que se ejecutan después de configurar el entorno
   "postCreateCommand": "sudo apt-get update && sudo apt-get install -y postgresql-client && npm install && npx prisma migrate dev --name init",
+  // Esto actualiza el sistema, instala herramientas necesarias, 
+  // instala dependencias del proyecto y configura la base de datos
+  
+  // Puertos que se abren para que el entorno pueda comunicarse con el exterior
   "forwardPorts": [5432, 8000],
-  "settings": { "terminal.integrated.shell.linux": "/bin/bash" },
+  // Esto permite que la base de datos y el proyecto se puedan acceder desde fuera del entorno
+  
+  // Configuración para la consola de comandos
+  "settings": { 
+    "terminal.integrated.shell.linux": "/bin/bash" 
+  },
+  
+  // Indica si se debe cambiar la forma en que se inicia el entorno
   "overrideCommand": false
 }
