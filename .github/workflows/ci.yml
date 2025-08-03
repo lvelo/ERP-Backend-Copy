@@ -5,10 +5,10 @@ name: CI (Integración Continua)
 on:
   # Cuando se actualiza el código en el branch principal
   push:
-    branches: [ main ]
+    branches: [ master ]
   # Cuando se crea una solicitud de cambios al branch principal
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 # Tareas que se ejecutan en la automatización
 jobs:
