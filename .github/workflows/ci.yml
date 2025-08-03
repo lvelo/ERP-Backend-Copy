@@ -28,7 +28,7 @@ jobs:
           # Contraseña de la base de datos (no es recomendable dejarla así, debería ser una variable segura)
           POSTGRES_PASSWORD: db_password
           # Nombre de la base de datos
-          POSTGRES_DB: main_database
+          POSTGRES_DB: master_database
 
     # Variables de entorno para la tarea
     env:
