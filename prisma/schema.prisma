@@ -1,150 +1,189 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Archivo de esquema de Prisma
+// Más info: https://pris.ly/d/prisma-schema
+
+//Esquema de base de datos (Prisma) para una aplicación tipo ERP / sistema de gestión que cubre varios dominios:
+
+// -Usuarios y autenticación: modelo Users (login, rol, estado).
+// -Organizaciones / empresas: Organization, orgId en muchos modelos para multi-tenancy parcial.
+// -Recursos Humanos / Personal: EmployeeInfo y modelos relacionados (direcciones, educación, tipo de empleado, designación, movimientos, asistencia, permisos/ausencias).
+// -Geografía / Direcciones: Country, Division, District, Thana, y modelos de dirección presentes/permanentes.
+// -Inventario / Compras: InvSupplier, InvItemSetup, InvItemsGroup, Measurement, y flujo de requisiciones (RequisitionParent/Child y RequisitionApprove*).
+// -Académico (módulo estudiantil): StudentInfo, ExamSetup (quizá reutilizando la misma app para escuelas).
+// -Configuración y catálogos: Gender, Religion, Bloodgroup, EmployeeType, Department, Designation, etc.
+
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client-js" // Genera el cliente JS para usar Prisma en la app
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  provider = "postgresql"        // Base de datos PostgreSQL
+  url      = env("DATABASE_URL") // URL de conexión desde variable de entorno
+  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL") // Útil para migraciones en CI (opcional)
 }
 
+// -------------------------
+// Modelo: Users
+// Representa los usuarios de la aplicación.
+// -------------------------
 model Users {
-  id           Int       @id @default(autoincrement())
-  username     String    @unique
-  password     String
-  mobileNumber String?
-  emailAddress String?
-  deptId       Int?
-  desigId      Int?
-  roleId       Int?
-  orgId        Int?
-  companyId    Int?
-  activeStatus Boolean   @default(true)
-  createdDate  String?
-  createdTime  String?
-  createdBy    Int?
-  createdAt    DateTime  @default(now())
-  updatedDate  String?
-  updatedTime  String?
-  updatedAt    DateTime?
+  id           Int       @id @default(autoincrement()) // PK autoincremental
+  username     String    @unique                       // Nombre de usuario (único)
+  password     String                                  // Contraseña: **NO** guardar en texto plano (ver nota de seguridad)
+  mobileNumber String?                                 // Celular (opcional)
+  emailAddress String?                                 // Email (opcional)
+  deptId       Int?                                    // Id de departamento (si existe tabla Department, usar relación en lugar de Int)
+  desigId      Int?                                    // Id de designación/cargo
+  roleId       Int?                                    // Id de rol
+  orgId        Int?                                    // Id de organización
+  companyId    Int?                                    // Id de compañía
+  activeStatus Boolean   @default(true)                // Si el usuario está activo
+  createdDate  String?                                 // Fecha (como texto) — considerar usar DateTime
+  createdTime  String?                                 // Hora (texto) — considerar DateTime o un único createdAt
+  createdBy    Int?                                    // Id del usuario que creó este registro
+  createdAt    DateTime  @default(now())               // Timestamp automático de creación
+  updatedDate  String?                                 // Fecha de actualización (texto)
+  updatedTime  String?                                 // Hora de actualización (texto)
+  updatedAt    DateTime?                               // Timestamp de última actualización
 }
 
+// -------------------------
+// Modelo: Organization
+// Empresas/organizaciones en el sistema.
+// -------------------------
 model Organization {
-  id             Int       @id @default(autoincrement())
-  orgName        String
-  orgDescription String?
-  serialNo       Int?
-  activeStatus   Boolean   @default(true)
-  createdDate    String?
-  createdTime    String?
-  createdBy      Int?
-  createdAt      DateTime  @default(now())
-  updatedDate    String?
-  updatedTime    String?
-  updatedAt      DateTime?
-  updatedBy      Int?
+  id             Int       @id @default(autoincrement()) // PK
+  orgName        String                                  // Nombre de la organización
+  orgDescription String?                                 // Descripción opcional
+  serialNo       Int?                                    // Número de serie / orden
+  activeStatus   Boolean   @default(true)                // Activa por defecto
+  createdDate    String?                                 // Fecha (texto)
+  createdTime    String?                                 // Hora (texto)
+  createdBy      Int?                                    // Usuario creador
+  createdAt      DateTime  @default(now())               // Fecha/hora creación
+  updatedDate    String?                                 // Fecha actualización
+  updatedTime    String?                                 // Hora actualización
+  updatedAt      DateTime?                               // Timestamp actualización
+  updatedBy      Int?                                    // Usuario que actualizó
 }
 
+// -------------------------
+// Modelo: Test
+// Modelo simple de ejemplo/uso para pruebas
+// -------------------------
 model Test {
-  id          Int     @id @default(autoincrement())
-  name        String?
-  descriptoin String?
+  id          Int     @id @default(autoincrement()) // PK
+  name        String?                               // Nombre de prueba (opcional)
+  descriptoin String?                               // NOTA: typo en el nombre (ver abajo)
 }
 
+// -------------------------
+// Modelo: AllModule
+// Define módulos funcionales de la app
+// -------------------------
 model AllModule {
-  id           Int       @id @default(autoincrement())
-  moduleName   String
-  moduleDes    String?
-  moduleLogo   String?
-  serialNo     Int?
-  orgId        Int?
-  activeStatus Boolean   @default(true)
-  createdDate  String?
-  createdTime  String?
-  createdBy    Int?
-  createdAt    DateTime  @default(now())
-  updatedDate  String?
-  updatedTime  String?
-  updatedAt    DateTime?
-  updatedBy    Int?
+  id           Int       @id @default(autoincrement()) // PK
+  moduleName   String                                  // Nombre del módulo
+  moduleDes    String?                                 // Descripción del módulo
+  moduleLogo   String?                                 // Ruta o URL del logo
+  serialNo     Int?                                    // Orden de visualización
+  orgId        Int?                                    // Organización propietaria (usar relación si existe)
+  activeStatus Boolean   @default(true)                // Estado activo
+  createdDate  String?                                 // Fecha (texto)
+  createdTime  String?                                 // Hora (texto)
+  createdBy    Int?                                    // Usuario creador
+  createdAt    DateTime  @default(now())               // Timestamp creación
+  updatedDate  String?                                 // Fecha actualización
+  updatedTime  String?                                 // Hora actualización
+  updatedAt    DateTime?                               // Timestamp actualización
+  updatedBy    Int?                                    // Usuario que actualizó
 }
 
+// -------------------------
+// Modelo: ModuleLink
+// Enlaces de menú/submenú dentro de un módulo
+// -------------------------
 model ModuleLink {
-  id                  Int       @id @default(autoincrement())
-  moduleId            Int
-  linkeNameMenuName   String
-  menuOrSubmenuStatus Int //1 for menue 2 for submenu
-  serialNo            Int?
-  activeStatus        Boolean   @default(true)
-  createdDate         String?
-  createdTime         String?
-  createdBy           Int?
-  createdAt           DateTime  @default(now())
-  updatedDate         String?
-  updatedTime         String?
-  updatedAt           DateTime?
-  updatedBy           Int?
+  id                  Int       @id @default(autoincrement()) // PK
+  moduleId            Int                                    // FK al módulo (actualmente Int; considerar relación)
+  linkeNameMenuName   String                                 // Nombre del link/menú (campo con typo en nombre)
+  menuOrSubmenuStatus Int    // 1 para menú, 2 para submenú
+  serialNo            Int?                                   // Orden
+  activeStatus        Boolean   @default(true)               // Activo/inactivo
+  createdDate         String?                                // Fecha creación
+  createdTime         String?                                // Hora creación
+  createdBy           Int?                                   // Usuario creador
+  createdAt           DateTime  @default(now())              // Timestamp creación
+  updatedDate         String?                                // Fecha actualización
+  updatedTime         String?                                // Hora actualización
+  updatedAt           DateTime?                              // Timestamp actualización
+  updatedBy           Int?                                   // Usuario que actualizó
 }
 
+// -------------------------
+// Modelo: ModuleLinkAssign
+// Asignación/permisos de enlaces a usuarios o grupos
+// -------------------------
 model ModuleLinkAssign {
-  id               Int       @id @default(autoincrement())
-  moduleId         Int
-  moduleLinkId     Int
-  userLabel        Int
-  permissionStatus Boolean //See menu link or not
-  activeStatus     Boolean   @default(true)
-  createdDate      String?
-  createdTime      String?
-  createdBy        Int?
-  createdAt        DateTime  @default(now())
-  updatedDate      String?
-  updatedTime      String?
-  updatedAt        DateTime?
-  updatedBy        Int?
+  id               Int       @id @default(autoincrement()) // PK
+  moduleId         Int                                    // ID del módulo
+  moduleLinkId     Int                                    // ID del enlace de módulo
+  userLabel        Int                                    // Etiqueta o grupo de usuario
+  permissionStatus Boolean // true = puede ver este enlace
+  activeStatus     Boolean   @default(true)               // Activo/inactivo
+  createdDate      String?                                // Fecha creación
+  createdTime      String?                                // Hora creación
+  createdBy        Int?                                   // Usuario creador
+  createdAt        DateTime  @default(now())              // Timestamp creación
+  updatedDate      String?                                // Fecha actualización
+  updatedTime      String?                                // Hora actualización
+  updatedAt        DateTime?                              // Timestamp actualización
+  updatedBy        Int?                                   // Usuario que actualizó
 }
 
+// -------------------------
+// Modelo: EmployeeInfo
+// Información detallada del empleado y relaciones con otras tablas
+// -------------------------
 model EmployeeInfo {
-  id                       Int                        @id @default(autoincrement())
-  firstName                String?
-  middleName               String
-  lastName                 String
-  fullName                 String
-  phone                    String?
-  mobileOne                String?
-  mobileTwo                String?
-  emergencyMobile          String?
-  officeEmail              String?
-  personalEmail            String?
-  empImage                 String?
-  empSignature             String?
-  nationalId               Int?
-  department               Department?                @relation(fields: [departmentId], references: [id])
-  departmentId             Int?
-  designation              Designation?               @relation(fields: [designationId], references: [id])
-  designationId            Int?
-  employeeType             EmployeeType?              @relation(fields: [empType], references: [id])
+  id                       Int                        @id @default(autoincrement()) // PK
+  firstName                String?                                               // Nombre
+  middleName               String                                                // Segundo nombre
+  lastName                 String                                                // Apellidos
+  fullName                 String                                                // Nombre completo
+  phone                    String?                                               // Teléfono fijo
+  mobileOne                String?                                               // Móvil principal
+  mobileTwo                String?                                               // Móvil secundario
+  emergencyMobile          String?                                               // Teléfono de emergencia
+  officeEmail              String?                                               // Email de oficina
+  personalEmail            String?                                               // Email personal
+  empImage                 String?                                               // Foto (ruta/URL)
+  empSignature             String?                                               // Firma (imagen/ruta)
+  nationalId               Int?                                                  // Documento nacional (número)
+  department               Department?                @relation(fields: [departmentId], references: [id]) // Relación opcional
+  departmentId             Int?                                                  // FK a Department
+  designation              Designation?               @relation(fields: [designationId], references: [id]) // Relación opcional
+  designationId            Int?                                                  // FK a Designation
+  employeeType             EmployeeType?              @relation(fields: [empType], references: [id]) // Tipo de empleado
   empType                  Int? // permanent, trainee, casual etc
-  leaveApplicableStatus    Boolean?
-  dateOfBirts              String?
-  gender                   Gender?                    @relation(fields: [genderId], references: [id])
+  leaveApplicableStatus    Boolean?                                              // Si aplica para licencias
+  dateOfBirts              String?                                               // NOTA: typo => dateOfBirth recomendado
+  gender                   Gender?                    @relation(fields: [genderId], references: [id]) // Relación a Gender
   genderId                 Int?
   religion                 Religion?                  @relation(fields: [religionId], references: [id])
   religionId               Int?
   bloodgroup               Bloodgroup?                @relation(fields: [bloodGroupId], references: [id])
   bloodGroupId             Int?
-  maritialStatus           Boolean?
-  spousName                String?
-  spouseProfe              Int? //spouse profession
+  maritialStatus           Boolean?                                              // Estado civil (usar enum o string si hay más estados)
+  spousName                String?                                               // Nombre del cónyuge (typo: spousName -> spouseName)
+  spouseProfe              Int? // spouse profession
   fatherOrHusbandName      String?
   fatherOrHusbandProfe     Int?
   fatherOrHusbandMobile    String?
   motherName               String?
   motherProfe              Int?
   motherMobile             String?
-  activeStatus             Boolean                    @default(true)
+  activeStatus             Boolean                    @default(true) // Activo/inactivo
   createdDate              String?
   createdTime              String?
   createdBy                Int?
@@ -153,6 +192,7 @@ model EmployeeInfo {
   updatedTime              String?
   updatedAt                DateTime?
   updatedBy                Int?
+  // Relaciones uno-a-muchos: cada arreglo referencia modelos relacionados
   employeeEdu              EmployeeEdu[]
   leaveParent              LeaveParent[]
   movement                 Movement[]
@@ -161,21 +201,25 @@ model EmployeeInfo {
   employeePermanentAddress EmployeePermanentAddress[]
 }
 
+// -------------------------
+// Modelo: EmployeePresentAddress
+// Dirección actual/presente del empleado
+// -------------------------
 model EmployeePresentAddress {
-  id                    Int           @id @default(autoincrement())
-  employeeInfo          EmployeeInfo? @relation(fields: [empId], references: [id])
-  empId                 Int? //present divisition
-  //start present address information
+  id                    Int           @id @default(autoincrement()) // PK
+  employeeInfo          EmployeeInfo? @relation(fields: [empId], references: [id]) // Relación opcional al empleado
+  empId                 Int? // FK al empleado (presente)
+  // Campos de dirección presente
   division              Division?     @relation(fields: [presentDiviId], references: [id])
-  presentDiviId         Int? //present divisition
+  presentDiviId         Int? // Id de división (presente)
   district              District?     @relation(fields: [presentDistId], references: [id])
-  presentDistId         Int? //present district
+  presentDistId         Int? // Id de distrito (presente)
   thana                 Thana?        @relation(fields: [presentPSId], references: [id])
-  presentPSId           Int? //present police station
-  presentCityCor        Int? // present city corporation
-  presentWord           Int? //present word
-  presentWordNo         Int? //present word no
-  presentVillRoad       Int? //present village or road
+  presentPSId           Int? // Id de comisaría/police station
+  presentCityCor        Int? // Id de city corporation (si aplica)
+  presentWord           Int? // Barrio/ward
+  presentWordNo         Int? // Número de ward
+  presentVillRoad       Int? // Pueblo o calle
   presentBasHolding     Int?
   presentPostOffice     Int?
   presentPostOfficeCode Int?
@@ -188,25 +232,29 @@ model EmployeePresentAddress {
   updatedTime           String?
   updatedAt             DateTime?
   updatedBy             Int?
-  studentInfo           StudentInfo[]
+  studentInfo           StudentInfo[] // Relación a estudiantes si corresponde
 }
 
+// -------------------------
+// Modelo: EmployeePermanentAddress
+// Dirección permanente del empleado (similar al anterior)
+// -------------------------
 model EmployeePermanentAddress {
   id                Int           @id @default(autoincrement())
   employeeInfo      EmployeeInfo? @relation(fields: [empId], references: [id])
-  empId             Int? //present divisition
-  //start permanent address information
+  empId             Int? // FK al empleado
+  // Campos de dirección permanente
   division          Division?     @relation(fields: [perDiviId], references: [id])
   perDiviId         Int?
   district          District?     @relation(fields: [pertDisId], references: [id])
   pertDisId         Int?
   thana             Thana?        @relation(fields: [pertPSId], references: [id])
-  pertPSId          Int? //permanent police station
-  perCityCor        Int? //permanent city corporation
-  perWord           Int? //permenaent word
-  perWordNo         Int? //permanent word no
-  perVillRoad       Int? //permanent village road
-  perBasHolding     Int? //permanent basha holdings
+  pertPSId          Int? // comisaría permanente
+  perCityCor        Int? // city corporation permanente
+  perWord           Int? // ward permanente (typo en comentarios originales)
+  perWordNo         Int? // número de ward permanente
+  perVillRoad       Int? // pueblo/calle permanente
+  perBasHolding     Int? // número de parcela/vivienda
   perPostOffice     Int?
   perPostOfficeCode Int?
   activeStatus      Boolean       @default(true)
@@ -218,261 +266,311 @@ model EmployeePermanentAddress {
   updatedTime       String?
   updatedAt         DateTime?
   updatedBy         Int?
-  studentInfo       StudentInfo[]
+  studentInfo       StudentInfo[] // Relación a estudiantes si corresponde
 }
-
+// -------------------------
+// Modelo: EmployeeEdu
+// Guarda la formación académica del empleado.
+// -------------------------
 model EmployeeEdu {
-  id               Int           @id @default(autoincrement())
-  employeeInfo     EmployeeInfo? @relation(fields: [empId], references: [id])
-  empId            Int?
-  degreeId         Int?
-  boardId          Int?
-  resultType       Int? //GPA or Division
-  resultGPA        String?
-  resultDivision   String?
-  certificateImage String?
-  activeStatus     Boolean       @default(true)
-  createdDate      String?
-  createdTime      String?
-  createdBy        Int?
-  createdAt        DateTime      @default(now())
-  updatedDate      String?
-  updatedTime      String?
-  updatedAt        DateTime?
-  updatedBy        Int?
+  id               Int           @id @default(autoincrement()) // PK autoincremental
+  employeeInfo     EmployeeInfo? @relation(fields: [empId], references: [id]) // Relación opcional al empleado
+  empId            Int?                                     // FK al EmployeeInfo (opcional)
+  degreeId         Int?                                     // FK posible a tabla de grados/títulos (opcional)
+  boardId          Int?                                     // FK posible a entidad evaluadora/board (opcional)
+  resultType       Int? //GPA or Division                     // Tipo de resultado (ej: 1 = GPA, 2 = Division). Mejor usar enum.
+  resultGPA        String?                                  // Nota/valor GPA (se almacena como texto: considerar Decimal/Float según uso)
+  resultDivision   String?                                  // División o clasificación textual
+  certificateImage String?                                  // Ruta/URL de certificado escaneado (opcional)
+  activeStatus     Boolean       @default(true)              // Si este registro está activo
+  createdDate      String?                                   // Fecha (texto) — preferible DateTime para consistencia
+  createdTime      String?                                   // Hora (texto) — considerar un solo createdAt DateTime
+  createdBy        Int?                                      // Usuario que creó el registro
+  createdAt        DateTime      @default(now())             // Timestamp de creación automático
+  updatedDate      String?                                   // Fecha de actualización (texto)
+  updatedTime      String?                                   // Hora de actualización (texto)
+  updatedAt        DateTime?                                 // Timestamp de última actualización
+  updatedBy        Int?                                      // Usuario que actualizó
 }
 
+// -------------------------
+// Modelo: EmployeeType
+// Tipos de empleados (permanente, contratado, trainee, etc.)
+// -------------------------
 model EmployeeType {
-  id           Int            @id @default(autoincrement())
-  empTypeName  String
-  empTypeDes   String?
-  orgId        Int?
-  serialNo     Int?
-  activeStatus Boolean        @default(true)
-  createdDate  String?
-  createdTime  String?
-  createdBy    Int?
-  createdAt    DateTime       @default(now())
-  updatedDate  String?
-  updatedTime  String?
-  updatedAt    DateTime?
-  updatedBy    Int?
-  employeeInfo EmployeeInfo[]
+  id           Int            @id @default(autoincrement()) // PK
+  empTypeName  String                                  // Nombre del tipo (ej: "Permanent")
+  empTypeDes   String?                                 // Descripción opcional
+  orgId        Int?                                    // FK a organización (opcional)
+  serialNo     Int?                                    // Orden (opcional)
+  activeStatus Boolean        @default(true)            // Activo por defecto
+  createdDate  String?                                 // Fecha (texto)
+  createdTime  String?                                 // Hora (texto)
+  createdBy    Int?                                    // Usuario creador
+  createdAt    DateTime       @default(now())           // Timestamp de creación
+  updatedDate  String?                                 // Fecha actualización
+  updatedTime  String?                                 // Hora actualización
+  updatedAt    DateTime?                                // Timestamp actualización
+  updatedBy    Int?                                    // Usuario que actualizó
+  employeeInfo EmployeeInfo[]                           // Relación uno-a-muchos: empleados que tienen este tipo
 }
 
+// -------------------------
+// Modelo: Department
+// Departamentos dentro de la organización (RRHH, Finanzas, etc.)
+// -------------------------
 model Department {
-  id             Int            @id @default(autoincrement())
-  departmentName String
-  departmentDes  String?
-  orgId          Int?
-  serialNo       Int?
-  activeStatus   Boolean        @default(true)
-  createdDate    String?
-  createdTime    String?
-  createdBy      Int?
-  createdAt      DateTime       @default(now())
-  updatedDate    String?
-  updatedTime    String?
-  updatedAt      DateTime?
-  updatedBy      Int?
-  employeeInfo   EmployeeInfo[]
-  studentInfo    StudentInfo[]
+  id             Int            @id @default(autoincrement()) // PK
+  departmentName String                                  // Nombre del departamento
+  departmentDes  String?                                 // Descripción
+  orgId          Int?                                    // FK a organización (opcional)
+  serialNo       Int?                                    // Orden visual o prioridad
+  activeStatus   Boolean        @default(true)            // Activo por defecto
+  createdDate    String?                                 // Fecha (texto)
+  createdTime    String?                                 // Hora (texto)
+  createdBy      Int?                                    // Usuario creador
+  createdAt      DateTime       @default(now())           // Timestamp creación
+  updatedDate    String?                                 // Fecha actualización
+  updatedTime    String?                                 // Hora actualización
+  updatedAt      DateTime?                                // Timestamp actualización
+  updatedBy      Int?                                    // Usuario que actualizó
+  employeeInfo   EmployeeInfo[]                           // Empleados pertenecientes al departamento
+  studentInfo    StudentInfo[]                            // (si aplica) estudiantes relacionados al depto
 }
 
+// -------------------------
+// Modelo: Gender
+// Lista de géneros soportados (masculino, femenino, otro...)
+// -------------------------
 model Gender {
-  id           Int            @id @default(autoincrement())
-  genderName   String
-  genderDes    String?
-  orgId        Int?
-  serialNo     Int?
-  activeStatus Boolean        @default(true)
-  createdDate  String?
-  createdTime  String?
-  createdBy    Int?
-  createdAt    DateTime       @default(now())
-  updatedDate  String?
-  updatedTime  String?
-  updatedAt    DateTime?
-  updatedBy    Int?
-  employeeInfo EmployeeInfo[]
-  studentInfo  StudentInfo[]
+  id           Int            @id @default(autoincrement()) // PK
+  genderName   String                                  // Nombre (ej: "Male", "Female", "Other")
+  genderDes    String?                                 // Descripción opcional
+  orgId        Int?                                    // FK organización (opcional)
+  serialNo     Int?                                    // Orden
+  activeStatus Boolean        @default(true)            // Activo por defecto
+  createdDate  String?                                 // Fecha (texto)
+  createdTime  String?                                 // Hora (texto)
+  createdBy    Int?                                    // Usuario creador
+  createdAt    DateTime       @default(now())           // Timestamp creación
+  updatedDate  String?                                 // Fecha actualización
+  updatedTime  String?                                 // Hora actualización
+  updatedAt    DateTime?                                // Timestamp actualización
+  updatedBy    Int?                                    // Usuario que actualizó
+  employeeInfo EmployeeInfo[]                           // Empleados con este género
+  studentInfo  StudentInfo[]                            // Estudiantes con este género
 }
 
+// -------------------------
+// Modelo: Religion
+// Religiones registradas (si se necesita por la app)
+// -------------------------
 model Religion {
-  id           Int            @id @default(autoincrement())
-  religionName String
-  religionDes  String?
-  orgId        Int?
-  serialNo     Int?
-  activeStatus Boolean        @default(true)
-  createdDate  String?
-  createdTime  String?
-  createdBy    Int?
-  createdAt    DateTime       @default(now())
-  updatedDate  String?
-  updatedTime  String?
-  updatedAt    DateTime?
-  updatedBy    Int?
-  employeeInfo EmployeeInfo[]
-  studentInfo  StudentInfo[]
+  id           Int            @id @default(autoincrement()) // PK
+  religionName String                                  // Nombre de la religión
+  religionDes  String?                                 // Descripción
+  orgId        Int?                                    // FK organización (opcional)
+  serialNo     Int?                                    // Orden
+  activeStatus Boolean        @default(true)            // Activo por defecto
+  createdDate  String?                                 // Fecha (texto)
+  createdTime  String?                                 // Hora (texto)
+  createdBy    Int?                                    // Usuario creador
+  createdAt    DateTime       @default(now())           // Timestamp creación
+  updatedDate  String?                                 // Fecha actualización
+  updatedTime  String?                                 // Hora actualización
+  updatedAt    DateTime?                                // Timestamp actualización
+  updatedBy    Int?                                    // Usuario que actualizó
+  employeeInfo EmployeeInfo[]                           // Empleados asociados
+  studentInfo  StudentInfo[]                            // Estudiantes asociados
 }
 
+// -------------------------
+// Modelo: Bloodgroup
+// Grupos sanguíneos (A+, O-, etc.)
+// -------------------------
 model Bloodgroup {
-  id             Int            @id @default(autoincrement())
-  bloodGroupName String
-  bloodGroupDes  String?
-  orgId          Int?
-  serialNo       Int?
-  activeStatus   Boolean        @default(true)
-  createdDate    String?
-  createdTime    String?
-  createdBy      Int?
-  createdAt      DateTime       @default(now())
-  updatedDate    String?
-  updatedTime    String?
-  updatedAt      DateTime?
-  updatedBy      Int?
-  employeeInfo   EmployeeInfo[]
-  studentInfo    StudentInfo[]
+  id             Int            @id @default(autoincrement()) // PK
+  bloodGroupName String                                  // Nombre del grupo sanguíneo
+  bloodGroupDes  String?                                 // Descripción (opcional)
+  orgId          Int?                                    // FK organización (opcional)
+  serialNo       Int?                                    // Orden
+  activeStatus   Boolean        @default(true)            // Activo por defecto
+  createdDate    String?                                 // Fecha (texto)
+  createdTime    String?                                 // Hora (texto)
+  createdBy      Int?                                    // Usuario creador
+  createdAt      DateTime       @default(now())           // Timestamp creación
+  updatedDate    String?                                 // Fecha actualización
+  updatedTime    String?                                 // Hora actualización
+  updatedAt      DateTime?                                // Timestamp actualización
+  updatedBy      Int?                                    // Usuario que actualizó
+  employeeInfo   EmployeeInfo[]                           // Empleados con este bloodgroup
+  studentInfo    StudentInfo[]                            // Estudiantes con este bloodgroup
 }
 
+// -------------------------
+// Modelo: Division
+// División geográfica/administrativa (provincia/estado, etc.)
+// -------------------------
 model Division {
-  id                       Int                        @id @default(autoincrement())
-  divisionName             String
-  divisionDes              String?
-  orgId                    Int?
-  serialNo                 Int?
-  activeStatus             Boolean                    @default(true)
-  createdDate              String?
-  createdTime              String?
-  createdBy                Int?
-  createdAt                DateTime                   @default(now())
-  updatedDate              String?
-  updatedTime              String?
-  updatedAt                DateTime?
-  updatedBy                Int?
-  employeePermanentAddress EmployeePermanentAddress[]
-  employeePresentAddress   EmployeePresentAddress[]
-  district District[]
+  id                       Int                        @id @default(autoincrement()) // PK
+  divisionName             String                                  // Nombre de la división
+  divisionDes              String?                                 // Descripción
+  orgId                    Int?                                    // FK a organización (opcional)
+  serialNo                 Int?                                    // Orden
+  activeStatus             Boolean                    @default(true) // Activo por defecto
+  createdDate              String?                                   // Fecha (texto)
+  createdTime              String?                                   // Hora (texto)
+  createdBy                Int?                                      // Usuario creador
+  createdAt                DateTime                   @default(now()) // Timestamp creación
+  updatedDate              String?                                   // Fecha actualización
+  updatedTime              String?                                   // Hora actualización
+  updatedAt                DateTime?                                 // Timestamp actualización
+  updatedBy                Int?                                      // Usuario que actualizó
+  employeePermanentAddress EmployeePermanentAddress[]               // Relación: direcciones permanentes en esta división
+  employeePresentAddress   EmployeePresentAddress[]                 // Relación: direcciones presentes en esta división
+  district District[]                                                    // Distritos que pertenecen a esta división
 }
 
+// -------------------------
+// Modelo: District
+// Distritos dentro de una Division
+// -------------------------
 model District {
-  id                       Int                        @id @default(autoincrement())
-  districtName             String
-  districtDes              String?
-  division     Division? @relation(fields: [divisionId], references: [id])
-  divisionId            Int?
-  orgId                    Int?
-  serialNo                 Int?
-  activeStatus             Boolean                    @default(true)
-  createdDate              String?
-  createdTime              String?
-  createdBy                Int?
-  createdAt                DateTime                   @default(now())
-  updatedDate              String?
-  updatedTime              String?
-  updatedAt                DateTime?
-  updatedBy                Int?
-  employeePermanentAddress EmployeePermanentAddress[]
-  employeePresentAddress   EmployeePresentAddress[]
-  thana Thana[]
+  id                       Int                        @id @default(autoincrement()) // PK
+  districtName             String                                  // Nombre del distrito
+  districtDes              String?                                 // Descripción
+  division     Division? @relation(fields: [divisionId], references: [id]) // Relación opcional a Division
+  divisionId            Int?                                      // FK a Division (opcional)
+  orgId                    Int?                                    // FK organización (opcional)
+  serialNo                 Int?                                    // Orden
+  activeStatus             Boolean                    @default(true) // Activo por defecto
+  createdDate              String?                                   // Fecha (texto)
+  createdTime              String?                                   // Hora (texto)
+  createdBy                Int?                                      // Usuario creador
+  createdAt                DateTime                   @default(now()) // Timestamp creación
+  updatedDate              String?                                   // Fecha actualización
+  updatedTime              String?                                   // Hora actualización
+  updatedAt                DateTime?                                 // Timestamp actualización
+  updatedBy                Int?                                      // Usuario que actualizó
+  employeePermanentAddress EmployeePermanentAddress[]               // Direcciones permanentes en este distrito
+  employeePresentAddress   EmployeePresentAddress[]                 // Direcciones presentes en este distrito
+  thana Thana[]                                                         // Subdivisiones (ej: police stations / subdistritos)
 }
-
+// -------------------------
+// Modelo: Thana
+// Subdivisión administrativa (ej: comisaría / subdistrito)
+// -------------------------
 model Thana {
-  id                       Int                        @id @default(autoincrement())
-  thanaName                String
-  thanaDes                 String?
-  district     District? @relation(fields: [dristrictId], references: [id])
-  dristrictId            Int?
-  orgId                    Int?
-  serialNo                 Int?
-  activeStatus             Boolean                    @default(true)
-  createdDate              String?
-  createdTime              String?
-  createdBy                Int?
-  createdAt                DateTime                   @default(now())
-  updatedDate              String?
-  updatedTime              String?
-  updatedAt                DateTime?
-  updatedBy                Int?
-  employeePermanentAddress EmployeePermanentAddress[]
-  employeePresentAddress   EmployeePresentAddress[]
+  id                       Int                        @id @default(autoincrement()) // PK autoincremental
+  thanaName                String                                  // Nombre de la Thana
+  thanaDes                 String?                                 // Descripción opcional
+  district     District? @relation(fields: [dristrictId], references: [id]) // Relación opcional al District (NOTE: typo en el nombre del campo)
+  dristrictId            Int?                                      // FK al District (typo: debería ser districtId)
+  orgId                    Int?                                    // FK a organización (opcional)
+  serialNo                 Int?                                    // Orden/serial (opcional)
+  activeStatus             Boolean                    @default(true) // Estado activo por defecto
+  createdDate              String?                                   // Fecha (texto) — prefiera DateTime
+  createdTime              String?                                   // Hora (texto)
+  createdBy                Int?                                      // Usuario creador
+  createdAt                DateTime                   @default(now()) // Timestamp de creación
+  updatedDate              String?                                   // Fecha actualización (texto)
+  updatedTime              String?                                   // Hora actualización (texto)
+  updatedAt                DateTime?                                 // Timestamp actualización
+  updatedBy                Int?                                      // Usuario que actualizó
+  employeePermanentAddress EmployeePermanentAddress[]               // Direcciones permanentes en esta thana
+  employeePresentAddress   EmployeePresentAddress[]                 // Direcciones presentes en esta thana
 }
 
+// -------------------------
+// Modelo: Designation
+// Cargos o puestos (ej: "Developer", "Manager")
+// -------------------------
 model Designation {
-  id              Int            @id @default(autoincrement())
-  designationName String
-  designationDes  String?
-  orgId           Int?
-  serialNo        Int?
-  activeStatus    Boolean        @default(true)
-  createdDate     String?
-  createdTime     String?
-  createdBy       Int?
-  createdAt       DateTime       @default(now())
-  updatedDate     String?
-  updatedTime     String?
-  updatedAt       DateTime?
-  updatedBy       Int?
-  employeeInfo    EmployeeInfo[]
+  id              Int            @id @default(autoincrement()) // PK
+  designationName String                                  // Nombre del cargo
+  designationDes  String?                                 // Descripción
+  orgId           Int?                                    // FK a organización (opcional)
+  serialNo        Int?                                    // Orden (opcional)
+  activeStatus    Boolean        @default(true)            // Activo por defecto
+  createdDate     String?                                 // Fecha (texto)
+  createdTime     String?                                 // Hora (texto)
+  createdBy       Int?                                    // Usuario creador
+  createdAt       DateTime       @default(now())           // Timestamp creación
+  updatedDate     String?                                 // Fecha actualización
+  updatedTime     String?                                 // Hora actualización
+  updatedAt       DateTime?                                // Timestamp actualización
+  updatedBy       Int?                                    // Usuario que actualizó
+  employeeInfo    EmployeeInfo[]                           // Empleados con esta designación
 }
 
+// -------------------------
+// Modelo: LeaveParent
+// Cabecera de una solicitud de licencia (puede tener varios días -> LeaveChild)
+// -------------------------
 model LeaveParent {
-  id               Int           @id @default(autoincrement())
-  employeeInfo     EmployeeInfo? @relation(fields: [empId], references: [id])
-  empId            Int?
-  leaveStatus      Int? // full day leave 1 short leave 2
-  leaveReasons     String?
-  leaveDes         String?
-  attachments      String?
-  leaveLocation    String?
-  emergencyContact String?
-  leaveFromDate    DateTime?     @db.Date
-  leaveToDate      DateTime?     @db.Date
-  orgId            Int?
-  activeStatus     Boolean       @default(true)
+  id               Int           @id @default(autoincrement()) // PK
+  employeeInfo     EmployeeInfo? @relation(fields: [empId], references: [id]) // Relación al empleado
+  empId            Int?                                      // FK al empleado
+  leaveStatus      Int? // full day leave 1 short leave 2   // Mejor: usar enum para claridad
+  leaveReasons     String?                                   // Motivo corto
+  leaveDes         String?                                   // Descripción detallada
+  attachments      String?                                   // Rutas/URLs de archivos adjuntos (controlar acceso)
+  leaveLocation    String?                                   // Ubicación de la licencia (opcional)
+  emergencyContact String?                                   // Contacto de emergencia durante la licencia
+  leaveFromDate    DateTime?     @db.Date                     // Fecha de inicio (solo fecha)
+  leaveToDate      DateTime?     @db.Date                     // Fecha de fin (solo fecha)
+  orgId            Int?                                      // FK organización
+  activeStatus     Boolean       @default(true)               // Activo por defecto
   createdDate      String?
   createdTime      String?
   createdBy        Int?
-  createdAt        DateTime      @default(now())
+  createdAt        DateTime      @default(now())             // Timestamp creación
   updatedDate      String?
   updatedTime      String?
   updatedAt        DateTime?
   updatedBy        Int?
-  leaveChild       LeaveChild[]
+  leaveChild       LeaveChild[]                                // Días individuales de la licencia
 }
 
+// -------------------------
+// Modelo: LeaveChild
+// Días específicos dentro de una LeaveParent (para licencias parciales, cortes horarios, etc.)
+// -------------------------
 model LeaveChild {
-  id            Int          @id @default(autoincrement())
-  leaveParent   LeaveParent? @relation(fields: [leaveId], references: [id])
-  leaveId       Int?
-  leaveDate     DateTime?    @db.Date
-  leaveFromTime String?
-  leaveToTime   String?
-  activeStatus  Boolean      @default(true)
+  id            Int          @id @default(autoincrement()) // PK
+  leaveParent   LeaveParent? @relation(fields: [leaveId], references: [id]) // Relación al padre
+  leaveId       Int?                                      // FK a LeaveParent
+  leaveDate     DateTime?    @db.Date                     // Fecha del día de licencia (solo fecha)
+  leaveFromTime String?                                   // Hora de inicio (texto) — considerar Time o DateTime
+  leaveToTime   String?                                   // Hora de fin (texto)
+  activeStatus  Boolean      @default(true)               // Activo por defecto
   createdDate   String?
   createdTime   String?
   createdBy     Int?
-  createdAt     DateTime     @default(now())
+  createdAt     DateTime     @default(now())              // Timestamp creación
   updatedDate   String?
   updatedTime   String?
   updatedAt     DateTime?
   updatedBy     Int?
 }
 
+// -------------------------
+// Modelo: Movement
+// Registro de movimientos/traslados del empleado (ej: trabajo remoto, cliente, proyecto)
+// -------------------------
 model Movement {
-  id               Int           @id @default(autoincrement())
-  employeeInfo     EmployeeInfo? @relation(fields: [empId], references: [id])
-  empId            Int?
-  clientId         Int?
-  projectId        Int?
-  movementStatus   Int? // from office 1 from home 2
-  movementReasons  String?
-  movementDes      String?
-  movementFromDate String?
-  movementToDate   String?
-  movementFromTime String?
-  movementToTime   String?
+  id               Int           @id @default(autoincrement()) // PK
+  employeeInfo     EmployeeInfo? @relation(fields: [empId], references: [id]) // Relación al empleado
+  empId            Int?                                      // FK al empleado
+  clientId         Int?                                      // FK a cliente (definir relación si existe tabla Client)
+  projectId        Int?                                      // FK a proyecto (definir relación si existe Project)
+  movementStatus   Int? // from office 1 from home 2         // Mejor usar enum (ej: OFFICE, HOME)
+  movementReasons  String?                                   // Motivos del movimiento
+  movementDes      String?                                   // Descripción detallada
+  movementFromDate String?                                   // Fecha (texto) — preferir DateTime o @db.Date
+  movementToDate   String?                                   // Fecha (texto)
+  movementFromTime String?                                   // Hora (texto)
+  movementToTime   String?                                   // Hora (texto)
   emergencyContact String?
   orgId            Int?
   activeStatus     Boolean       @default(true)
@@ -486,16 +584,20 @@ model Movement {
   updatedBy        Int?
 }
 
+// -------------------------
+// Modelo: Attendance
+// Registro diario de asistencia del empleado
+// -------------------------
 model Attendance {
-  id             Int           @id @default(autoincrement())
-  employeeInfo   EmployeeInfo? @relation(fields: [empId], references: [id])
-  empId          Int?
-  attendanceDate String?
-  logInTime      String?
-  logOutTime     String?
-  biometricId    Int?
-  machineId      Int?
-  shiftId        Int?
+  id             Int           @id @default(autoincrement()) // PK
+  employeeInfo   EmployeeInfo? @relation(fields: [empId], references: [id]) // Relación al empleado
+  empId          Int?                                      // FK al empleado
+  attendanceDate String?                                   // Fecha como texto — preferir Date o DateTime
+  logInTime      String?                                   // Hora de ingreso (texto) — considerar Time/DateTime
+  logOutTime     String?                                   // Hora de salida (texto)
+  biometricId    Int?                                      // Id del dispositivo biométrico (dato sensible: controlar acceso)
+  machineId      Int?                                      // Id de la máquina/terminal
+  shiftId        Int?                                      // FK a tabla de turnos (si existe)
   orgId          Int?
   activeStatus   Boolean       @default(true)
   createdDate    String?
@@ -508,11 +610,15 @@ model Attendance {
   updatedBy      Int?
 }
 
+// -------------------------
+// Modelo: Holidays
+// Días feriados / no laborales
+// -------------------------
 model Holidays {
-  id                Int       @id @default(autoincrement())
-  holidayTitle      String?
-  hlidayDescription String?
-  date              String?
+  id                Int       @id @default(autoincrement()) // PK
+  holidayTitle      String?                                   // Título del feriado
+  hlidayDescription String?                                   // Descripción (typo: hliday -> holiday)
+  date              String?                                   // Fecha del feriado (texto) — preferir Date/@db.Date
   orgId             Int?
   activeStatus      Boolean   @default(true)
   createdDate       String?
@@ -524,32 +630,39 @@ model Holidays {
   updatedAt         DateTime?
   updatedBy         Int?
 }
-
+// -------------------------
+// Modelo: Country
+// Países (ej: Argentina, España). Relacionado con proveedores (InvSupplier).
+// -------------------------
 model Country {
-  id                 Int           @id @default(autoincrement())
-  countryName        String?
-  countryDescription String?
-  countryCode        Int?
-  activeStatus       Boolean       @default(true)
-  createdDate        String?
-  createdTime        String?
-  createdBy          Int?
-  createdAt          DateTime      @default(now())
+  id                 Int           @id @default(autoincrement()) // PK autoincremental
+  countryName        String?                              // Nombre del país (opcional)
+  countryDescription String?                              // Descripción (opcional)
+  countryCode        Int?                                 // Código del país (ej: 54). Considerar String si incluye prefijos con + o ceros
+  activeStatus       Boolean       @default(true)         // Estado activo
+  createdDate        String?                              // Fecha como texto (preferible DateTime)
+  createdTime        String?                              // Hora como texto (preferible DateTime o usar solo createdAt)
+  createdBy          Int?                                 // Usuario que creó el registro
+  createdAt          DateTime      @default(now())        // Timestamp de creación
   updatedDate        String?
   updatedTime        String?
   updatedAt          DateTime?
   updatedBy          Int?
-  invSupplier        InvSupplier[]
+  invSupplier        InvSupplier[]                        // Relación: proveedores en este país
 }
 
+// -------------------------
+// Modelo: InvSupplier
+// Proveedores de inventario. Apunta a Country.
+// -------------------------
 model InvSupplier {
-  id                  Int            @id @default(autoincrement())
-  supplierName        String?
-  supplierDescription String?
-  country             Country?       @relation(fields: [countryId], references: [id])
-  countryId           Int?
-  orgId               Int?
-  activeStatus        Boolean        @default(true)
+  id                  Int            @id @default(autoincrement()) // PK
+  supplierName        String?                                 // Nombre del proveedor
+  supplierDescription String?                                 // Descripción del proveedor
+  country             Country?       @relation(fields: [countryId], references: [id]) // Relación al país
+  countryId           Int?                                    // FK a Country
+  orgId               Int?                                    // FK a organización (opcional)
+  activeStatus        Boolean        @default(true)            // Activo por defecto
   createdDate         String?
   createdTime         String?
   createdBy           Int?
@@ -558,16 +671,20 @@ model InvSupplier {
   updatedTime         String?
   updatedAt           DateTime?
   updatedBy           Int?
-  invItemSetup        InvItemSetup[]
+  invItemSetup        InvItemSetup[]                           // Artículos que provee este proveedor
 }
 
+// -------------------------
+// Modelo: InvItemsGroup
+// Grupo/categoría de ítems (ej: "Papelería", "Hardware").
+// -------------------------
 model InvItemsGroup {
-  id                      Int                       @id @default(autoincrement())
-  udId                    Int?
-  groupName               String?
-  groupDescription        String?
-  remarks                 String?
-  orgId                   Int?
+  id                      Int                       @id @default(autoincrement()) // PK
+  udId                    Int?                      // Campo adicional (no está claro su propósito — documentarlo)
+  groupName               String?                   // Nombre del grupo
+  groupDescription        String?                   // Descripción del grupo
+  remarks                 String?                   // Observaciones
+  orgId                   Int?                      // FK organización
   activeStatus            Boolean                   @default(true)
   createdDate             String?
   createdTime             String?
@@ -577,15 +694,19 @@ model InvItemsGroup {
   updatedTime             String?
   updatedAt               DateTime?
   updatedBy               Int?
-  invItemSetup            InvItemSetup[]
-  requisitionChild        RequisitionChild[]
-  requisitionApproveChild RequisitionApproveChild[]
+  invItemSetup            InvItemSetup[]            // Items pertenecientes a este grupo
+  requisitionChild        RequisitionChild[]        // Requisiciones relacionadas
+  requisitionApproveChild RequisitionApproveChild[] // Aprobaciones relacionadas
 }
 
+// -------------------------
+// Modelo: Measurement
+// Unidad de medida (ej: "kg", "litro", "unidad").
+// -------------------------
 model Measurement {
-  id                      Int                       @id @default(autoincrement())
-  measurementName         String
-  measurementDescription  String?
+  id                      Int                       @id @default(autoincrement()) // PK
+  measurementName         String                    // Nombre de la unidad
+  measurementDescription  String?                   // Descripción (opcional)
   remarks                 String?
   orgId                   Int?
   activeStatus            Boolean                   @default(true)
@@ -597,31 +718,35 @@ model Measurement {
   updatedTime             String?
   updatedAt               DateTime?
   updatedBy               Int?
-  invItemSetup            InvItemSetup[]
-  requisitionChild        RequisitionChild[]
-  requisitionApproveChild RequisitionApproveChild[]
+  invItemSetup            InvItemSetup[]            // Items que usan esta medida
+  requisitionChild        RequisitionChild[]        // Requisiciones que usan esta medida
+  requisitionApproveChild RequisitionApproveChild[] // Aprobaciones que usan esta medida
 }
 
+// -------------------------
+// Modelo: InvItemSetup
+// Definición de un artículo/ítem en el inventario.
+// -------------------------
 model InvItemSetup {
-  id                      Int                       @id @default(autoincrement())
-  udId                    Int?
-  itemCode                String?
-  modelNo                 String?
-  InvItemsGroup           InvItemsGroup?            @relation(fields: [itemGroupId], references: [id])
-  itemGroupId             Int?
-  itemName                String
+  id                      Int                       @id @default(autoincrement()) // PK
+  udId                    Int?                      // Campo adicional (documentar propósito)
+  itemCode                String?                   // Código único del ítem (recomendar índice/único)
+  modelNo                 String?                   // Número de modelo del ítem
+  InvItemsGroup           InvItemsGroup?            @relation(fields: [itemGroupId], references: [id]) // Relación al grupo
+  itemGroupId             Int?                      // FK al grupo de ítems
+  itemName                String                    // Nombre del ítem (requerido)
   itemDescription         String?
-  Measurement             Measurement?              @relation(fields: [measurementtId], references: [id])
-  measurementtId          Int?
-  costPrice               Float?
-  salePrice               Float?
-  manufactureDate         DateTime?
-  expireDate              DateTime?
-  taxRate                 Float?
-  reorderLabel            Int?
-  invSupplier             InvSupplier?              @relation(fields: [supplierId], references: [id])
-  supplierId              Int?
-  itemImage               String?
+  Measurement             Measurement?              @relation(fields: [measurementtId], references: [id]) // Relación a unidad de medida
+  measurementtId          Int?                      // FK a Measurement (NOTE: typo en el nombre -> measurementId recomendado)
+  costPrice               Float?                    // Precio de costo (usar Decimal para precisión monetaria)
+  salePrice               Float?                    // Precio de venta (usar Decimal para dinero)
+  manufactureDate         DateTime?                 // Fecha de fabricación
+  expireDate              DateTime?                 // Fecha de caducidad (si aplica)
+  taxRate                 Float?                    // Tasa de impuesto (ej: 0.18)
+  reorderLabel            Int?                      // Punto de reorden (stock mínimo)
+  invSupplier             InvSupplier?              @relation(fields: [supplierId], references: [id]) // Proveedor
+  supplierId              Int?                      // FK a proveedor
+  itemImage               String?                   // URL/ruta de imagen
   remarks                 String?
   orgId                   Int?
   activeStatus            Boolean                   @default(true)
@@ -633,23 +758,27 @@ model InvItemSetup {
   updatedTime             String?
   updatedAt               DateTime?
   updatedBy               Int?
-  requisitionChild        RequisitionChild[]
-  requisitionApproveChild RequisitionApproveChild[]
+  requisitionChild        RequisitionChild[]        // Requisiciones que incluyen este ítem
+  requisitionApproveChild RequisitionApproveChild[] // Aprobaciones que incluyen este ítem
 }
 
+// -------------------------
+// Modelo: RequisitionParent
+// Cabecera de una requisición (pedido interno/externo).
+// -------------------------
 model RequisitionParent {
-  id                       Int                       @id @default(autoincrement())
-  requisitionNo            String
-  requisitionType          Int? //1 for internal, 2 for external
-  requisitionFrom          Int?
-  requisitionTo            Int?
-  itemGroupId              Int?
-  itemId                   Int?
-  requisitionDate          DateTime
-  requisitionStatus        Int                       @default(0) // 0 form requisition pending 1 form approve 2 for cancel
-  requisitionRemarks       String
-  requisitionAppCanRemarks String // requisition approved or cancel satus
-  requisitionBy            Int?
+  id                       Int                       @id @default(autoincrement()) // PK
+  requisitionNo            String                    // Número/ID legible de la requisición (recomendar UNIQUE)
+  requisitionType          Int? //1 for internal, 2 for external          // Mejor usar enum (ej: INTERNAL, EXTERNAL)
+  requisitionFrom          Int?                      // Origen (ej: departamentoId). Preferir FK con relación
+  requisitionTo            Int?                      // Destino (ej: departamentoId o proveedorId)
+  itemGroupId              Int?                      // FK al grupo de item (usar relación si aplica)
+  itemId                   Int?                      // FK al item (usar relación)
+  requisitionDate          DateTime                  // Fecha de la requisición (requerido)
+  requisitionStatus        Int                       @default(0) // 0 = pending, 1 = approved, 2 = cancelled (usar enum)
+  requisitionRemarks       String                    // Comentarios (si puede no tener, marcar como String?)
+  requisitionAppCanRemarks String                    // Comentarios de aprobación / cancelación
+  requisitionBy            Int?                      // Usuario que creó la requisición
   orgId                    Int?
   activeStatus             Boolean                   @default(true)
   createdDate              String?
@@ -660,46 +789,53 @@ model RequisitionParent {
   updatedTime              String?
   updatedAt                DateTime?
   updatedBy                Int?
-  requisitionChild         RequisitionChild[]
-  requisitionApproveChild  RequisitionApproveChild[]
+  requisitionChild         RequisitionChild[]        // Líneas/detalles de la requisición
+  requisitionApproveChild  RequisitionApproveChild[] // Entradas de aprobación por línea
 }
-
+// -------------------------
+// Modelo: RequisitionChild
+// Línea/detalle de una requisición (cantidad, precio, unidad, etc.)
+// -------------------------
 model RequisitionChild {
-  id                Int                @id @default(autoincrement())
-  requisitionParent RequisitionParent? @relation(fields: [requisitionId], references: [id])
-  requisitionId     Int?
-  invItemsGroup     InvItemsGroup?     @relation(fields: [itemGroupId], references: [id])
-  itemGroupId       Int?
-  invItemSetup      InvItemSetup?      @relation(fields: [itemId], references: [id])
-  itemId            Int?
-  measurement       Measurement?       @relation(fields: [uomId], references: [id])
-  uomId             Int?
-  qty               Int
-  price             Int?
-  orgId             Int?
-  activeStatus      Boolean            @default(true)
-  createdDate       String?
-  createdTime       String?
-  createdBy         Int?
-  createdAt         DateTime           @default(now())
+  id                Int                @id @default(autoincrement()) // PK autoincremental
+  requisitionParent RequisitionParent? @relation(fields: [requisitionId], references: [id]) // Relación a la cabecera
+  requisitionId     Int?                                                             // FK a RequisitionParent
+  invItemsGroup     InvItemsGroup?     @relation(fields: [itemGroupId], references: [id]) // Relación al grupo de ítems
+  itemGroupId       Int?                                                             // FK al grupo de ítems
+  invItemSetup      InvItemSetup?      @relation(fields: [itemId], references: [id]) // Relación al ítem
+  itemId            Int?                                                             // FK al ítem
+  measurement       Measurement?       @relation(fields: [uomId], references: [id]) // Relación a la unidad de medida (UOM)
+  uomId             Int?                                                             // FK a Measurement
+  qty               Int                // Cantidad solicitada (requerido)
+  price             Int?               // Precio por unidad (recomiendo Decimal en lugar de Int)
+  orgId             Int?               // Organización propietaria (opcional)
+  activeStatus      Boolean            @default(true) // Si la línea está activa
+  createdDate       String?            // Fecha como texto (preferible usar createdAt DateTime)
+  createdTime       String?            // Hora como texto
+  createdBy         Int?               // Usuario creador
+  createdAt         DateTime           @default(now()) // Timestamp creación
   updatedDate       String?
   updatedTime       String?
   updatedAt         DateTime?
   updatedBy         Int?
 }
 
+// -------------------------
+// Modelo: RequisitionApproveParent
+// Cabecera de requisición para el flujo de aprobación (similar a RequisitionParent)
+// -------------------------
 model RequisitionApproveParent {
-  id                      Int                       @id @default(autoincrement())
-  requisitionNo           String
-  requisitionType         Int? //1 for internal, 2 for external
-  requisitionFrom         Int?
-  requisitionTo           Int?
-  itemGroupId             Int?
-  itemId                  Int?
-  requisitionDate         DateTime
-  requisitionStatus       Int                       @default(0) // 0 form requisition pending 1 form approve 2 for cancel
-  requisitionRemarks      String
-  requisitionBy           Int?
+  id                      Int                       @id @default(autoincrement()) // PK
+  requisitionNo           String                    // Número legible de la requisición
+  requisitionType         Int? //1 for internal, 2 for external // Mejor usar enum
+  requisitionFrom         Int?                      // Origen (mejor FK explícita)
+  requisitionTo           Int?                      // Destino (mejor FK explícita)
+  itemGroupId             Int?                      // FK al grupo de ítems
+  itemId                  Int?                      // FK al ítem
+  requisitionDate         DateTime                  // Fecha de la requisición
+  requisitionStatus       Int                       @default(0) // 0=pending,1=approved,2=cancel (usar enum)
+  requisitionRemarks      String                    // Comentarios (si puede faltar, usar String?)
+  requisitionBy           Int?                      // Usuario que creó/la solicitó
   orgId                   Int?
   activeStatus            Boolean                   @default(true)
   createdDate             String?
@@ -710,24 +846,28 @@ model RequisitionApproveParent {
   updatedTime             String?
   updatedAt               DateTime?
   updatedBy               Int?
-  requisitionApproveChild RequisitionApproveChild[]
+  requisitionApproveChild RequisitionApproveChild[] // Líneas de aprobación relacionadas
 }
 
+// -------------------------
+// Modelo: RequisitionApproveChild
+// Línea de aprobación/recepción: cantidades aprobadas/recibidas, precios, etc.
+// -------------------------
 model RequisitionApproveChild {
-  id                       Int                       @id @default(autoincrement())
-  requisitionApproveParent RequisitionApproveParent? @relation(fields: [requisitionApproveId], references: [id])
-  requisitionApproveId     Int?
-  requisitionParent        RequisitionParent?        @relation(fields: [requisitionId], references: [id])
+  id                       Int                       @id @default(autoincrement()) // PK
+  requisitionApproveParent RequisitionApproveParent? @relation(fields: [requisitionApproveId], references: [id]) // Relación al padre de aprobación
+  requisitionApproveId     Int? // FK a RequisitionApproveParent
+  requisitionParent        RequisitionParent?        @relation(fields: [requisitionId], references: [id]) // Relación a la requisición original
   requisitionId            Int?
-  invItemsGroup            InvItemsGroup?            @relation(fields: [itemGroupId], references: [id])
+  invItemsGroup            InvItemsGroup?            @relation(fields: [itemGroupId], references: [id]) // Relación al grupo
   itemGroupId              Int?
-  invItemSetup             InvItemSetup?             @relation(fields: [itemId], references: [id])
+  invItemSetup             InvItemSetup?             @relation(fields: [itemId], references: [id]) // Relación al ítem aprobado
   itemId                   Int?
-  measurement              Measurement?              @relation(fields: [uomId], references: [id])
+  measurement              Measurement?              @relation(fields: [uomId], references: [id]) // Unidad de medida
   uomId                    Int?
-  approvedQty              Int?
-  receivedQty              Int?
-  price                    Int?
+  approvedQty              Int?                      // Cantidad aprobada
+  receivedQty              Int?                      // Cantidad recibida físicamente
+  price                    Int?                      // Precio (recomendar Decimal)
   orgId                    Int?
   activeStatus             Boolean                   @default(true)
   createdDate              String?
@@ -740,36 +880,40 @@ model RequisitionApproveChild {
   updatedBy                Int?
 }
 
+// -------------------------
+// Modelo: StudentInfo
+// Información personal académica de un estudiante (muchos campos similares a EmployeeInfo)
+// -------------------------
 model StudentInfo {
-  id                       Int                        @id @default(autoincrement())
-  firstName                String?
-  middleName               String
-  lastName                 String
-  fullName                 String
-  phone                    String?
-  mobileOne                String?
-  mobileTwo                String?
-  emergencyMobile          String?
-  officeEmail              String?
-  personalEmail            String?
-  studentImage             String?
-  studentSignature         String?
-  nationalId               Int?
-  department               Department?                @relation(fields: [departmentId], references: [id])
+  id                       Int                        @id @default(autoincrement()) // PK
+  firstName                String?                                   // Nombre (opcional)
+  middleName               String                                    // Segundo nombre (actualmente requerido)
+  lastName                 String                                    // Apellido (requerido)
+  fullName                 String                                    // Nombre completo
+  phone                    String?                                   // Teléfono fijo (opcional)
+  mobileOne                String?                                   // Móvil principal
+  mobileTwo                String?                                   // Móvil secundario
+  emergencyMobile          String?                                   // Teléfono de emergencia
+  officeEmail              String?                                   // Email institucional
+  personalEmail            String?                                   // Email personal
+  studentImage             String?                                   // Ruta/URL a la imagen del estudiante (controlar acceso)
+  studentSignature         String?                                   // Firma del estudiante (imagen)
+  nationalId               Int?                                      // Documento nacional (sensible)
+  department               Department?                @relation(fields: [departmentId], references: [id]) // Relación al departamento
   departmentId             Int?
-  programmId               Int?
-  admissionSession         Int?
-  admissionYearID          Int?
-  dateOfBirth              String?
+  programmId               Int?                                      // PROBLEM: typo ? debería ser programId (documentarlo/corregir)
+  admissionSession         Int?                                      // ID de la sesión de admisión
+  admissionYearID          Int?                                      // INCONSISTENT: usar admissionYearId (camelCase)
+  dateOfBirth              String?                                   // Fecha de nacimiento (preferir DateTime o @db.Date)
   gender                   Gender?                    @relation(fields: [genderId], references: [id])
   genderId                 Int?
   religion                 Religion?                  @relation(fields: [religionId], references: [id])
   religionId               Int?
   bloodgroup               Bloodgroup?                @relation(fields: [bloodGroupId], references: [id])
   bloodGroupId             Int?
-  maritialStatus           Boolean?
-  spousName                String?
-  spouseProfe              Int? //spouse profession
+  maritialStatus           Boolean?                                  // TYPO: maritialStatus -> maritalStatus (recomendar enum: SINGLE, MARRIED, ...)
+  spousName                String?                                   // TYPO: spousName -> spouseName
+  spouseProfe              Int? //spouse profession (consider renombrar a spouseProfession)
   fatherOrHusbandName      String?
   fatherOrHusbandProfe     Int?
   fatherOrHusbandMobile    String?
@@ -786,18 +930,22 @@ model StudentInfo {
   updatedTime              String?
   updatedAt                DateTime?
   updatedBy                Int?
-  employeePresentAddress   EmployeePresentAddress[]
+  employeePresentAddress   EmployeePresentAddress[]   // Reuso de modelo para direcciones (ok, pero confunde nombres)
   employeePermanentAddress EmployeePermanentAddress[]
 }
 
+// -------------------------
+// Modelo: ExamSetup
+// Configuración de un examen: fechas, horas, tipo, etc.
+// -------------------------
 model ExamSetup {
-  id              Int       @id @default(autoincrement())
-  examName        String
-  examDescription String?
-  examType        Int
-  examStartDate   DateTime
-  examEndDate     DateTime
-  examStartTime   DateTime
+  id              Int       @id @default(autoincrement()) // PK
+  examName        String    // Nombre del examen
+  examDescription String?   // Descripción opcional
+  examType        Int       // Tipo de examen (usar enum para claridad)
+  examStartDate   DateTime  // Fecha/hora de inicio (si solo fecha, usar @db.Date)
+  examEndDate     DateTime  // Fecha/hora de fin
+  examStartTime   DateTime  // Si solo es hora, considerar Time/DateTime según la DB
   examEndTime     DateTime
   examSerialNo    Int?
   orgId           Int?
